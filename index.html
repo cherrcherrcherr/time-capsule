@@ -2,9 +2,19 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Капсула Времени</title>
     <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/index.umd.js"></script>
+    <script>
+        // Мгновенная инициализация VK Bridge при старте
+        try {
+            if (window.vkBridge) {
+                vkBridge.send('VKWebAppInit');
+            }
+        } catch(e) {
+            console.log('VK Bridge init fail', e);
+        }
+    </script>
     <style>
         body.theme-dark {
             --bg-body: #0b0f19;
@@ -63,7 +73,6 @@
         textarea:focus, input:focus, select:focus { border-color: var(--accent); outline: none; }
         textarea { resize: vertical; min-height: 80px; max-height: 250px; }
         
-        /* КУСТОМИЗАЦИЯ ДЛЯ ВЫПАДАЮЩИХ ОПЦИЙ (ВЫРАВНИВАНИЕ И ТЕМНЫЙ ФОН) */
         option { background: var(--bg-card); color: var(--text-main); font-weight: bold; }
 
         .btn-main { width: 100%; background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; border: none; border-radius: 10px; padding: 12px; font-weight: bold; cursor: pointer; margin-top: 8px; transition: transform 0.1s; }
@@ -91,7 +100,6 @@
         .filter-chip { background: var(--bg-body); border: 1px solid var(--border-card); color: var(--text-sub); padding: 6px 10px; border-radius: 8px; font-size: 10px; font-weight: bold; cursor: pointer; white-space: nowrap; }
         .filter-chip.active { background: var(--accent); color: #000; border-color: var(--accent); }
 
-        /* ИНТЕРАКТИВНОЕ ВЫДЕЛЕНИЕ И РОЗОВЫЙ НЕОН ПРИ НАВЕДЕНИИ НА КАПСУЛУ */
         .card { 
             background: var(--bg-card); border: 1px solid var(--border-card); 
             border-radius: 12px; padding: 12px; margin-bottom: 12px; text-align: left; 
@@ -116,7 +124,6 @@
         .capsule-preview { text-align: center; margin: 10px 0; position: relative; }
         .capsule-preview img { width: 130px; height: 130px; object-fit: contain; transition: all 0.3s ease; }
         
-        /* РОЗОВАЯ НЕОНОВАЯ ПОДСВЕТКА КАРТИНКИ */
         .card:hover .capsule-preview img {
             filter: drop-shadow(0 0 12px #ec4899);
             transform: scale(1.05);
@@ -145,10 +152,9 @@
 
         .skins-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; flex: 1; overflow-y: auto; padding-right: 4px; }
         .skin-card { background: var(--bg-card); border: 1px solid var(--border-card); border-radius: 12px; padding: 8px; text-align: center; cursor: pointer; position: relative; transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s, box-shadow 0.25s; }
-        .skin-card:hover { transform: translateY(-4px) scale(1.50); border-color: var(--accent); box-shadow: 0 8px 20px rgba(251, 191, 36, 0.3); z-index: 10; }
+        .skin-card:hover { transform: translateY(-4px) scale(1.05); border-color: var(--accent); box-shadow: 0 8px 20px rgba(251, 191, 36, 0.3); z-index: 10; }
         .skin-card.selected { border-color: var(--accent); background: rgba(251, 191, 36, 0.1); box-shadow: 0 0 10px rgba(251, 191, 36, 0.2); }
         .skin-card img { width: 100%; height: 65px; object-fit: contain; margin-bottom: 4px; transition: transform 0.25s ease; }
-        .skin-card:hover img { transform: scale(1.60); }
         .skin-card-title { font-size: 11px; font-weight: bold; color: var(--text-main); line-height: 1.2; }
         .skin-card-price { font-size: 10px; color: var(--accent); margin-top: 4px; font-weight: bold; }
 
@@ -181,6 +187,9 @@
         .toast-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); z-index: 2000; align-items: center; justify-content: center; padding: 20px; cursor: pointer; }
         .toast-overlay.active { display: flex; }
         .toast-card { background: var(--bg-card); border: 1px solid var(--accent); border-radius: 16px; padding: 20px; width: 100%; max-width: 320px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); pointer-events: none; }
+        
+        .service-card-item { background: var(--bg-body); border: 1px solid var(--border-card); border-radius: 10px; padding: 10px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .service-card-item img { width: 40px; height: 40px; object-fit: contain; }
     </style>
 </head>
 <body class="theme-dark">
@@ -202,7 +211,6 @@
                 <textarea id="create-text" placeholder="Напиши мысли, секрет или послание..." oninput="saveDraft()"></textarea>
             </div>
 
-            <!-- СЕТКА ОПЦИЙ 2x2 -->
             <div class="options-grid">
                 <div class="opt-btn" id="btn-opt-photo" onclick="document.getElementById('create-photo').click()">
                     <i class="icon">📸</i>
@@ -226,7 +234,6 @@
                 </div>
             </div>
 
-            <!-- ВЫБОР ДАТЫ И ВРЕМЕНИ -->
             <div class="form-group" style="display: flex; gap: 8px;">
                 <div style="flex: 1;">
                     <label>Дата открытия</label>
@@ -355,6 +362,14 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="service-modal">
+        <div class="content-modal-card">
+            <h3 id="service-modal-title" style="color:var(--accent); font-size:16px; margin-bottom:12px;">Услуги</h3>
+            <div id="service-list-container" style="display:flex; flex-direction:column; gap:8px;"></div>
+            <button class="btn-main" onclick="closeServiceModal()" style="margin-top:12px;">Отмена</button>
+        </div>
+    </div>
+
     <div class="toast-overlay" id="toast-modal" onclick="closeToast()">
         <div class="toast-card">
             <div style="font-size:24px; margin-bottom:8px;" id="toast-icon">⏳</div>
@@ -450,6 +465,7 @@
     let currentSocietyStatus = 'all';
     let showBookmarksOnly = false;
     let deletingCapsuleTargetId = null;
+    let currentServiceType = null;
 
     window.addEventListener('DOMContentLoaded', () => {
         document.getElementById('create-text').value = localStorage.getItem('draft_text') || '';
@@ -528,11 +544,13 @@
     }
 
     function requestNotificationsVK() {
-        vkBridge.send('VKWebAppAllowMessagesFromGroup')
-            .then((data) => {
-                if (data.result) showToast('🔔', 'Уведомления включены! Напомним за 24 часа и 5 минут.');
-            })
-            .catch(() => alert('Разрешите отправку сообщений в всплывающем окне ВК.'));
+        if(window.vkBridge) {
+            vkBridge.send('VKWebAppAllowMessagesFromGroup')
+                .then((data) => {
+                    if (data.result) showToast('🔔', 'Уведомления включены! Напомним за 24 часа и 5 минут.');
+                })
+                .catch(() => showToast('🔔', 'Разрешите отправку сообщений в всплывающем окне ВК.'));
+        }
     }
 
     function toggleTheme() {
@@ -564,14 +582,15 @@
         }
     }
 
-    vkBridge.send('VKWebAppInit');
-    vkBridge.send('VKWebAppGetUserInfo').then(data => {
-        if(data && data.first_name) {
-            currentUserName = `${data.first_name} ${data.last_name || ''}`.trim();
-            if(data.id) currentUserId = `vk_${data.id}`;
-            document.getElementById('user-title').innerText = `👋 Привет, ${data.first_name}!`;
-        }
-    }).catch(()=>{});
+    if (window.vkBridge) {
+        vkBridge.send('VKWebAppGetUserInfo').then(data => {
+            if(data && data.first_name) {
+                currentUserName = `${data.first_name} ${data.last_name || ''}`.trim();
+                if(data.id) currentUserId = `vk_${data.id}`;
+                document.getElementById('user-title').innerText = `👋 Привет, ${data.first_name}!`;
+            }
+        }).catch(()=>{});
+    }
 
     function formatDateStr(timestamp) {
         if (!timestamp) return '';
@@ -654,15 +673,17 @@
     }
 
     function selectFriendVK() {
-        vkBridge.send('VKWebAppGetFriends', { multi: false })
-            .then(data => {
-                if (data.users && data.users.length > 0) {
-                    currentFriend = data.users[0];
-                    document.getElementById('btn-opt-friend').classList.add('active');
-                    document.getElementById('text-opt-friend').innerText = currentFriend.first_name;
-                    updateMainButton();
-                }
-            }).catch(() => alert('Выбор друга работает внутри ВК'));
+        if(window.vkBridge) {
+            vkBridge.send('VKWebAppGetFriends', { multi: false })
+                .then(data => {
+                    if (data.users && data.users.length > 0) {
+                        currentFriend = data.users[0];
+                        document.getElementById('btn-opt-friend').classList.add('active');
+                        document.getElementById('text-opt-friend').innerText = currentFriend.first_name;
+                        updateMainButton();
+                    }
+                }).catch(() => showToast('👤', 'Выбор друга работает внутри приложения ВК'));
+        }
     }
 
     function updateMainButton() {
@@ -743,7 +764,7 @@
             return showToast('⛔', `Капсулу ${isPublicOptionActive ? 'Общества' : ''} можно запечатать не менее чем на ${minDays} дней!`);
         }
 
-        if(skin.price > 0) {
+        if(skin.price > 0 && window.vkBridge) {
             vkBridge.send('VKWebAppShowOrderBox', { type: 'item', item: `skin_${skin.id}` })
                 .catch(() => { saveCapsuleToDb(text, date, timeStr, isAnonOptionActive, isPublicOptionActive); });
         } else {
@@ -1307,8 +1328,10 @@
     }
 
     function shareToStories() {
-        vkBridge.send('VKWebAppShowStoryBox', { background_type: 'none' })
-            .catch(() => showToast('📸', 'Вызов VK Stories сработает внутри приложений ВК!'));
+        if(window.vkBridge) {
+            vkBridge.send('VKWebAppShowStoryBox', { background_type: 'none' })
+                .catch(() => showToast('📸', 'Вызов VK Stories сработает внутри приложений ВК!'));
+        }
     }
 </script>
 </body>
